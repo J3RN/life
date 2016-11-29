@@ -27,6 +27,7 @@ I recommend using Tmux with this program running in one pane and `top` in the ot
 If you think this blasphemy is wonderful and want to contribute, you can. That said, it is supposed to remain as small and simple as possible, so please try to avoid adding features.
 
 Steps to contribute:
+
 1. Fork this repository
 2. Create a branch on your fork for your work
 3. Do your work on that branch

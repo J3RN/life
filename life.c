@@ -9,36 +9,31 @@
 #define NAMELEN 10
 #define PATHLEN 100 // Implicit: Path to directory must be <= 90 characters
 
-void mutate(unsigned int *buf) {
-	int i;
-	for (i = 0; i < BUFSIZE; i++) {
-		if (rand() < RAND_MAX / 2000) { // 1/2000 chance
-			int index = (int)((float) rand() / RAND_MAX * sizeof(unsigned int));
-			unsigned int mutator = 0b1 << index;
-			buf[i] ^= mutator;
-		}
-	}
-}
-
-void reproduce(char *parent_name) {
-	char child_name[NAMELEN];
+void copy_file(char * parent_name, char * child_name) {
 	unsigned int buf[BUFSIZE];
+	FILE *parent, *child;
 
 	snprintf(child_name, NAMELEN, "%d", rand());
 
-	FILE *parent = fopen(parent_name, "rb");
-	FILE *child = fopen(child_name, "wb");
+	parent = fopen(parent_name, "rb");
+	child = fopen(child_name, "wb");
 
 	while (!feof(parent)) {
 		fread(buf, sizeof(unsigned int), BUFSIZE, parent);
-		mutate(buf);
 		fwrite(buf, sizeof(unsigned int), BUFSIZE, child);
 	}
 
 	fclose(parent);
 	fclose(child);
+}
 
-	pid_t my_pid = fork();
+void reproduce(char *parent_name) {
+	pid_t my_pid;
+	char child_name[NAMELEN];
+
+	copy_file(parent_name, child_name);
+
+	my_pid = fork();
 	if (my_pid == 0) { // Child
 		printf("Starting %s\n", child_name);
 

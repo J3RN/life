@@ -7,31 +7,47 @@
 
 #define BUFSIZE 1000
 #define NAMELEN 10
-#define PATHLEN 100 // Implicit: Path to directory must be <= 90 characters
+#define PATHLEN 100 		/* Implicit: Path to directory must be <= 90 characters */
 
-void copy_file(char * parent_name, char * child_name) {
+#define FAILURE 0
+#define SUCCESS 1
+
+int copy_file(char * parent_name, char * child_name) {
 	unsigned int buf[BUFSIZE];
 	FILE *parent, *child;
 
 	snprintf(child_name, NAMELEN, "%d", rand());
 
-	parent = fopen(parent_name, "rb");
-	child = fopen(child_name, "wb");
+	if (!(parent = fopen(parent_name, "rb"))) {
+		perror("fopen()");
+		return FAILURE;
+	}
+	if (!(child = fopen(child_name, "wb"))) {
+		perror("fopen()");
+		return FAILURE;
+	}
 
 	while (!feof(parent)) {
-		fread(buf, sizeof(unsigned int), BUFSIZE, parent);
+		size_t ret_code = fread(buf, sizeof(unsigned int), BUFSIZE, parent);
+		if (ret_code != BUFSIZE) {
+			printf("Presumably an error?\n");
+		}
 		fwrite(buf, sizeof(unsigned int), BUFSIZE, child);
 	}
 
 	fclose(parent);
 	fclose(child);
+
+	return SUCCESS;
 }
 
 void reproduce(char *parent_name) {
 	pid_t my_pid;
 	char child_name[NAMELEN];
 
-	copy_file(parent_name, child_name);
+	if (!copy_file(parent_name, child_name)) {
+		return;
+	}
 
 	my_pid = fork();
 	if (my_pid == 0) { // Child
@@ -39,7 +55,10 @@ void reproduce(char *parent_name) {
 
 		// Get path to containing directory
 		char full_path[PATHLEN];
-		getcwd(full_path, PATHLEN);
+		if (getcwd(full_path, PATHLEN) == NULL) {
+			printf("Child aborted\n");
+			return;
+		}
 		strcat(full_path, "/");
 
 		// Append child's name
